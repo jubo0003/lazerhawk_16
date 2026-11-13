@@ -51,3 +51,5 @@ body:has(#welcome[open]){overflow:hidden}
 .welcome-logo img+img{left:43.506px;top:2.763px}
 .welcome-sound-end{position:absolute;left:269.91px;top:11.22px}
 #welcome-sound:focus-visible{outline:2px solid #000;outline-offset:2px}
+
+#welcome-enter .welcome-enter-label{position:absolute;inset:7px;display:flex;align-items:center;justify-content:center;background:#171717;color:#e7e749;font-family:Gabarito,sans-serif;font-size:24px;font-weight:600;line-height:1}
