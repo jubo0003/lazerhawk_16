@@ -62,27 +62,30 @@ if (AudioContextClass) {
 }
 music.volume = 0.35;
 function syncMusicControl() {
+  const enabled = !userPausedMusic;
   const playing = !music.paused && (!audioContext || audioContext.state === 'running');
-  if (playing) $('#music-status').textContent = '';
-  musicToggle.setAttribute('aria-pressed', String(playing));
-  musicToggle.setAttribute('aria-label', playing ? 'Stop baggrundsmusik' : 'Afspil baggrundsmusik');
-  $('#music-label').textContent = playing ? 'Stop musik' : 'Start musik';
-  $('#welcome-sound').setAttribute('aria-pressed', String(playing));
-  $('#welcome-sound').setAttribute('aria-label', playing ? 'Slå musik fra' : 'Slå lyd til for den fulde UHØRT oplevelse');
-  $('.welcome-sound-copy').textContent = playing ? 'slå lyd fra under din' : 'slå lyd til for den fulde';
+  $('#music-status').textContent = enabled && !playing ? 'Musikken er slået til og starter ved din første interaktion, hvis browseren blokerer automatisk afspilning.' : '';
+  musicToggle.setAttribute('aria-pressed', String(enabled));
+  musicToggle.setAttribute('aria-label', enabled ? 'Stop baggrundsmusik' : 'Afspil baggrundsmusik');
+  $('#music-label').textContent = enabled ? 'Stop musik' : 'Start musik';
+  $('#welcome-sound').setAttribute('aria-pressed', String(enabled));
+  $('#welcome-sound').setAttribute('aria-label', enabled ? 'Slå musik fra' : 'Slå lyd til for den fulde UHØRT oplevelse');
+  $('.welcome-sound-copy').textContent = enabled ? 'slå lyd fra under din' : 'slå lyd til for den fulde';
 }
 async function startMusic() {
+  if (userPausedMusic) return;
   // Invoke both within the gesture, before awaiting either permission check.
   const resume = audioContext ? audioContext.resume() : Promise.resolve();
   const play = music.play();
-  try { await Promise.all([resume, play]); }
-  catch { $('#music-status').textContent = 'Klik for at starte musikken.'; }
+  try { await Promise.all([resume, play]); } catch {}
+  // An off choice also cancels playback that was waiting for browser permission.
+  if (userPausedMusic) music.pause();
   syncMusicControl();
 }
 function toggleMusic() {
-  const playing = !music.paused && (!audioContext || audioContext.state === 'running');
-  userPausedMusic = playing;
-  if (playing) music.pause();
+  userPausedMusic = !userPausedMusic;
+  music.muted = userPausedMusic;
+  if (userPausedMusic) music.pause();
   else startMusic();
   syncMusicControl();
 }
@@ -97,6 +100,7 @@ function unlockMusic(event) {
   if (!userPausedMusic && (music.paused || (audioContext && audioContext.state !== 'running'))) startMusic();
 }
 document.addEventListener('pointerdown', unlockMusic);
+document.addEventListener('click', unlockMusic);
 document.addEventListener('keydown', unlockMusic);
 function fitWelcome() {
   if (!welcome.open) return;
@@ -131,4 +135,5 @@ if (!entered) {
   if (!reduceMotion.matches) welcomeVideo.play().catch(() => {});
 }
 reduceMotion.addEventListener('change', e => { if (e.matches) welcomeVideo.pause(); else if (welcome.open) welcomeVideo.play().catch(() => {}); });
+syncMusicControl();
 startMusic();
