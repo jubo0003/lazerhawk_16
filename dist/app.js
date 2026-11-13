@@ -37,3 +37,98 @@ document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click'
 document.querySelectorAll('[data-year]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-year]').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#selected-year').textContent=b.dataset.year;const track=$('.year-track');track.firstElementChild.style.top=((Number(b.dataset.year)-2022)*.195+.03)*track.clientHeight+'px';}));
 document.querySelectorAll('.archive-artist').forEach(b=>b.addEventListener('click',()=>show(b.textContent,'Tidligere artist på UHØRT. Arkivets artistprofiler er endnu ikke tilføjet.')));
 $('#share').addEventListener('click',async()=>{try{if(navigator.share)await navigator.share({title:document.title,url:location.href});else{await navigator.clipboard.writeText(location.href);const t=$('.toast');t.textContent='Link kopieret';t.hidden=false;setTimeout(()=>t.hidden=true,3000);}}catch(e){if(e.name!=='AbortError')show('Del UHØRT','Kopiér adressen fra browserens adresselinje for at dele siden.');}});
+
+// One continuous audio source: muffled on entry, opening into the full track.
+const music = $('#background-music');
+const musicToggle = $('#music-toggle');
+const welcome = $('#welcome');
+const welcomeVideo = $('.welcome-video');
+const welcomeSessionKey = 'uhort-welcome-entered';
+let entered = false;
+try { entered = sessionStorage.getItem(welcomeSessionKey) === 'true'; } catch {}
+let userPausedMusic = false;
+let audioContext;
+let musicFilter;
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+if (AudioContextClass) {
+  audioContext = new AudioContextClass();
+  const source = audioContext.createMediaElementSource(music);
+  musicFilter = audioContext.createBiquadFilter();
+  musicFilter.type = 'lowpass';
+  musicFilter.Q.value = 0.707;
+  musicFilter.frequency.value = entered ? 20000 : 342;
+  source.connect(musicFilter);
+  musicFilter.connect(audioContext.destination);
+}
+music.volume = 0.35;
+function syncMusicControl() {
+  const playing = !music.paused && (!audioContext || audioContext.state === 'running');
+  if (playing) $('#music-status').textContent = '';
+  musicToggle.setAttribute('aria-pressed', String(playing));
+  musicToggle.setAttribute('aria-label', playing ? 'Stop baggrundsmusik' : 'Afspil baggrundsmusik');
+  $('#music-label').textContent = playing ? 'Stop musik' : 'Start musik';
+  $('#welcome-sound').setAttribute('aria-pressed', String(playing));
+  $('#welcome-sound').setAttribute('aria-label', playing ? 'Slå musik fra' : 'Slå lyd til for den fulde UHØRT oplevelse');
+  $('.welcome-sound-copy').textContent = playing ? 'slå lyd fra under din' : 'slå lyd til for den fulde';
+}
+async function startMusic() {
+  // Invoke both within the gesture, before awaiting either permission check.
+  const resume = audioContext ? audioContext.resume() : Promise.resolve();
+  const play = music.play();
+  try { await Promise.all([resume, play]); }
+  catch { $('#music-status').textContent = 'Klik for at starte musikken.'; }
+  syncMusicControl();
+}
+function toggleMusic() {
+  const playing = !music.paused && (!audioContext || audioContext.state === 'running');
+  userPausedMusic = playing;
+  if (playing) music.pause();
+  else startMusic();
+  syncMusicControl();
+}
+music.addEventListener('play', syncMusicControl);
+music.addEventListener('pause', syncMusicControl);
+if (audioContext) audioContext.addEventListener('statechange', syncMusicControl);
+musicToggle.addEventListener('click', toggleMusic);
+$('#welcome-sound').addEventListener('click', toggleMusic);
+// Retry blocked autoplay on the first eligible interaction without overriding mute.
+function unlockMusic(event) {
+  if (event.target.closest('#music-toggle, #welcome-sound, #welcome-enter')) return;
+  if (!userPausedMusic && (music.paused || (audioContext && audioContext.state !== 'running'))) startMusic();
+}
+document.addEventListener('pointerdown', unlockMusic);
+document.addEventListener('keydown', unlockMusic);
+function fitWelcome() {
+  if (!welcome.open) return;
+  const scale = Math.min(welcome.clientWidth / 693.996, (innerHeight - 32) / 410.321);
+  $('.welcome-canvas').style.transform = `scale(${scale})`;
+  welcome.style.height = `${410.321 * scale}px`;
+  welcome.scrollTop = 0;
+}
+function enterSite() {
+  if (entered) return;
+  entered = true;
+  try { sessionStorage.setItem(welcomeSessionKey, 'true'); } catch {}
+  if (!userPausedMusic) startMusic();
+  if (musicFilter) {
+    const now = audioContext.currentTime;
+    musicFilter.frequency.cancelScheduledValues(now);
+    musicFilter.frequency.setValueAtTime(342, now);
+    // Logarithmic sweep feels even across the audible octaves, with no jump.
+    musicFilter.frequency.exponentialRampToValueAtTime(20000, now + 2.5);
+  }
+  if (welcome.open) welcome.close();
+  welcomeVideo.pause();
+  musicToggle.focus({preventScroll:true});
+}
+$('#welcome-enter').addEventListener('click', enterSite);
+welcome.addEventListener('cancel', event => { event.preventDefault(); enterSite(); });
+welcome.addEventListener('close', enterSite);
+if (!entered) {
+  welcome.showModal();
+  new ResizeObserver(fitWelcome).observe(welcome);
+  fitWelcome();
+  if (!reduceMotion.matches) welcomeVideo.play().catch(() => {});
+}
+reduceMotion.addEventListener('change', e => { if (e.matches) welcomeVideo.pause(); else if (welcome.open) welcomeVideo.play().catch(() => {}); });
+startMusic();

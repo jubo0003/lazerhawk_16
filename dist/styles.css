@@ -27,3 +27,27 @@
 /* Original SaveInta concert clip in both Figma video placements. */
 .hero-image.concert-video{object-fit:cover;background:none}
 .instagram-concert{position:absolute;left:0;top:0;width:127.1277%;height:103.0174%;object-fit:fill;pointer-events:none}
+
+/* Music remains available while scrolling, independent of video playback. */
+.music-toggle{position:fixed;right:20px;bottom:20px;z-index:20;display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 18px;background:#e7e749;color:#171717;border:3px solid #171717;font-size:18px;font-weight:600;box-shadow:3px 3px 0 #171717}
+.music-toggle:hover{background:#bc6ced}.music-toggle[aria-pressed="true"]{background:#bc6ced}.music-toggle>span:first-child{font-size:24px;line-height:1}
+@media(max-width:760px){.music-toggle{right:14px;bottom:calc(14px + env(safe-area-inset-bottom));font-size:16px;padding:8px 14px}}
+
+/* Welcome composition from Figma 1093:641, scaled as one canvas. */
+#welcome{width:min(694px,calc(100vw - 32px));max-width:none;height:auto;aspect-ratio:693.996 / 410.321;max-height:calc(100dvh - 32px);padding:0;border:0;overflow:hidden;background:#e7e749;margin:auto}
+#welcome::backdrop{background:rgb(0 0 0 / .72)}
+body:has(#welcome[open]){overflow:hidden}
+.welcome-canvas{position:absolute;left:0;top:0;width:693.996px;height:410.321px;transform-origin:top left;isolation:isolate}
+.welcome-video{position:absolute;width:568.904px;height:1011.384px;left:50%;top:50%;object-fit:cover;transform:translate(-50%,-50%) rotate(-90deg);z-index:-1}
+.welcome-panel{position:absolute;left:60.49px;top:65.69px;max-width:none}
+#welcome-enter{position:absolute;left:230px;top:248px;width:253px;height:61px;background:transparent;border:0}
+#welcome-enter:hover{background:rgb(255 255 255 / .12)}
+#welcome-enter:focus-visible{outline:3px solid white;outline-offset:8px}
+#welcome-sound{position:absolute;left:180px;top:355px;width:350px;height:44px;text-align:left;color:#000;font-size:16px;font-weight:400;background:transparent;border:0;padding:0}
+.welcome-sound-icon{position:absolute;left:6px;top:8.17px;max-width:none}
+.welcome-sound-copy{position:absolute;left:46.89px;top:11.22px;white-space:nowrap}
+.welcome-logo{position:absolute;left:207.73px;top:12.89px;width:56.348px;height:16.558px}
+.welcome-logo img{position:absolute;left:2.441px;top:2.4px;max-width:none}
+.welcome-logo img+img{left:43.506px;top:2.763px}
+.welcome-sound-end{position:absolute;left:269.91px;top:11.22px}
+#welcome-sound:focus-visible{outline:2px solid #000;outline-offset:2px}

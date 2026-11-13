@@ -31,3 +31,7 @@ The source is a static HTML/CSS/JavaScript site; `dist/` can be hosted on any st
 ## GitHub Pages
 
 The `.github/workflows/pages.yml` workflow publishes `dist/` on every push to `main`. In the repository's Settings → Pages, set the source to GitHub Actions. All site assets use relative paths to support a project Pages URL.
+
+## Background music
+
+`dist/assets/back-track.mp3` is the supplied Back track.mp3. The fixed music button starts or stops it independently of the videos. Stopping pauses the track; starting resumes it. It loops at 35% volume and continues while scrolling and using in-page navigation. The page attempts audible playback on load and shows Stop musik when playing. If the browser blocks autoplay, the first eligible interaction starts playback. The welcome popover appears once per browser session. While it is open, a 342 Hz low-pass filter muffles the track. Entering the site opens the cutoff exponentially to 20 kHz over 2.5 seconds without restarting the music.
